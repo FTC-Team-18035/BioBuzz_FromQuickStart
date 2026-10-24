@@ -1,6 +1,6 @@
 package org.firstinspires.ftc.teamcode.SerqetCode;
 
-import com.arcrobotics.ftclib.controller.PIDFController;
+//import com.arcrobotics.ftclib.controller.PIDFController;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -8,6 +8,9 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.configuration.typecontainers.MotorConfigurationType;
 import com.qualcomm.robotcore.util.Range;
+
+import org.firstinspires.ftc.teamcode.pedroPathing.PIDFCoefficients;
+import org.firstinspires.ftc.teamcode.pedroPathing.PIDFController;
 
 /**
  * Shooter subsystem handling dual flywheel motors and angle servos.
@@ -37,8 +40,8 @@ public class ShooterSubsystem {
         vaultFeed = hardwareMap.get(CRServo.class, "vault_feed");
         vaultFeed2 = hardwareMap.get(CRServo.class, "vault_feed2");
         // changed to FTCLib PIDFController
-        leftController = new PIDFController(0.005, 0, 0, 0.000544);
-        rightController = new PIDFController(0.005, 0, 0, 0.000544);
+        leftController = new PIDFController(new PIDFCoefficients(0005, 0, 0, 0.000544));
+        rightController = new PIDFController(new PIDFCoefficients(0.005, 0, 0, 0.000544));
         configureMotors();
         setServoPosition(0.205);
         targetVelocity = 0.0;
@@ -137,10 +140,9 @@ public class ShooterSubsystem {
     }
 
     public void update() {
-        leftController.setSetPoint(targetVelocity);
-        rightController.setSetPoint(-targetVelocity);
+        leftController.setTargetPosition(targetVelocity);
+        rightController.setTargetPosition(-targetVelocity);
 
-        /*
         leftController.updateFeedForwardInput(targetVelocity);
         rightController.updateFeedForwardInput(-targetVelocity);
 
@@ -152,7 +154,6 @@ public class ShooterSubsystem {
 
         leftShooter.setPower(leftPower);
         rightShooter.setPower(rightPower);
-        */
 
         // Keep servos locked to the last commanded, clamped position for safety
         pitchServoLeft.setPosition(currentServoPosition);

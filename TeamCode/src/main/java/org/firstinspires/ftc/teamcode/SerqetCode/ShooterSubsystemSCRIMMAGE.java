@@ -1,6 +1,5 @@
 package org.firstinspires.ftc.teamcode.SerqetCode;
 
-import com.arcrobotics.ftclib.controller.PIDFController;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -8,6 +7,9 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.configuration.typecontainers.MotorConfigurationType;
 import com.qualcomm.robotcore.util.Range;
+
+import org.firstinspires.ftc.teamcode.pedroPathing.PIDFController;
+import org.firstinspires.ftc.teamcode.pedroPathing.PIDFCoefficients;
 
 /**
  * Shooter subsystem handling dual flywheel motors and angle servos.
@@ -23,8 +25,8 @@ public class ShooterSubsystemSCRIMMAGE {
     private final Servo vaultRelease;
     private final CRServo vaultFeed;
     private final CRServo vaultFeed2;
-    private final PIDFController leftController;
-    private final PIDFController rightController;
+    private final org.firstinspires.ftc.teamcode.pedroPathing.PIDFController leftController;
+    private final org.firstinspires.ftc.teamcode.pedroPathing.PIDFController rightController;
     private double targetVelocity;
     private double currentServoPosition;
 
@@ -149,7 +151,7 @@ public class ShooterSubsystemSCRIMMAGE {
 
         leftShooter.setPower(leftPower);
         rightShooter.setPower(rightPower);
-        
+
         // Keep servos locked to the last commanded, clamped position for safety
         pitchServoLeft.setPosition(currentServoPosition);
         //pitchServoRight.setPosition(currentServoPosition);
