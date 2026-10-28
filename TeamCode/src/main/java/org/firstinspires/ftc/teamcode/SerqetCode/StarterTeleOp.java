@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.SerqetCode;
 import com.pedropathing.drivetrain.DrivePowers;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.follower.ManualDrive;
+import com.pedropathing.math.Pose;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -13,33 +14,24 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import org.firstinspires.ftc.teamcode.pedro.Constants;
 
 
-
-
-
-// ******************THIS IS A STARTER OP-MODE BASED OFF DECODE SEASON ******************
-// ------------------ It uses a configuration and calculations based off of SERQUET -----
-// ------------------ and the DECODE season scoring goal --------------------------------
-
+/**
+ * THIS IS A STARTER OP-MODE BASED OFF DECODE SEASON ** It uses a configuration and calculations based off of SERQUET and the DECODE season scoring goal **/
 
 @TeleOp(name = "StarterTeleOp")
 public class StarterTeleOp extends LinearOpMode {
 
-       /* =========================================================
-           LIMELIGHT GEOMETRY CONSTANTS
-           ---------------------------------------------------------
-           Used to compute distance to target from vertical angle.
-           Units are meters for heights, degrees for angles.
-           ========================================================= */
+    /**
+    * ============== LIMELIGHT GEOMETRY CONSTANTS ========================= Used to compute distance to target from vertical angle. Units are meters for heights, degrees for angles.
+    * ==================================================================
+    */
         private static final double LIMELIGHT_HEIGHT = 0.24;
         private static final double TARGET_HEIGHT = 0.75;
         private static final double LIMELIGHT_MOUNT_ANGLE = 13.0;
 
-    /* =========================================================
-       ALIGNMENT CONTROL CONSTANTS
-       ---------------------------------------------------------
-       These control how aggressively and how precisely the robot
-       attempts to rotate to face the AprilTag.
-       ========================================================= */
+    /**
+     * ==================== ALIGNMENT CONTROL CONSTANTS ====================  These control how aggressively and how precisely the robot attempts to rotate to face the AprilTag.
+     * =========================================================
+     */
 
         // Proportional gain converting heading error → turn power
         private static final double ALIGN_KP = -0.015;
@@ -59,9 +51,9 @@ public class StarterTeleOp extends LinearOpMode {
         // Counts consecutive loops without improvement
         private int alignStallCounter = 0;
 
-    /* =========================================================
+    /** ============================================================
        SHOOTER SAFETIES & FILTERING
-       ========================================================= */
+       ============================================================ */
 
         // Allowed error between target and actual flywheel velocity
         private static final double FLYWHEEL_TOLERANCE = 50;
@@ -77,17 +69,18 @@ public class StarterTeleOp extends LinearOpMode {
         public double rightError;
         public double pullBackTicks = -60;
 
-        /* =========================================================
+        /** ===========================================================
            HARDWARE
-           ========================================================= */
+           =========================================================== */
         private Limelight3A limelight;
         private Follower follower;
         private ShooterSubsystem shooter;
         private DcMotorEx intake;
 
-        /* =========================================================
-           SHOOTING STATE MACHINE
-           ========================================================= */
+        /**
+         * ===========================================================
+         * SHOOTING STATE MACHINE
+         * =========================================================== */
         private enum ShootState {
             IDLE,        // Driver control
             ALIGNING,    // Vision-based heading refinement
@@ -96,32 +89,34 @@ public class StarterTeleOp extends LinearOpMode {
         }
 
         private ShootState shootState = ShootState.IDLE;
-    /* =========================================================
-       ALIGNMENT TRACKING
-       ========================================================= */
+    /** ===========================================================
+     *                    ALIGNMENT TRACKING
+     * =========================================================== */
 
         // Best heading error seen so far during this alignment attempt
         private double bestHeadingErrorDeg = Double.MAX_VALUE;
 
-        /* =========================================================
-           DISTANCE TRACKING
-           ========================================================= */
+        /** ===========================================================
+         *            DISTANCE TRACKING
+         * =========================================================== */
         private Double smoothedDistanceCm = null;
         private double targetDistanceCm = 0.0;
 
-        /* =========================================================
-           TAG VISIBILITY TRACKING
-           ========================================================= */
+        /** ===============================================================
+         *             TAG VISIBILITY TRACKING
+         * ===============================================================
+         */
         private long lastTagSeenTimeMs = 0;
         private double heading = 0;
 
-        public double scalar;
+        public double scalar;   // Turbo drivetrain multiplier
         public boolean pullBackStarted = false;
 
         @Override
         public void runOpMode() {
 
-            /* ---------------- Hardware Initialization ---------------- */
+            /** ---------------- Hardware Initialization ---------------- */
+
             // TODO create ShooterSubsystem class
             shooter = new ShooterSubsystem(hardwareMap);
 
@@ -129,17 +124,12 @@ public class StarterTeleOp extends LinearOpMode {
             intake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
             intake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-            //lift = hardwareMap.get(DcMotorEx.class, "lift");
-            //lift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-            //lift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            //lift.setTargetPosition(0);
-            //lift.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-
             limelight = hardwareMap.get(Limelight3A.class, "limelight");
             limelight.pipelineSwitch(6); // AprilTag pipeline
             limelight.start();
 
-            /* ---------------- Drive / Localization Setup ---------------- */
+            /** ---------------- Drive / Localization Setup ---------------- */
+
             // TODO Pedro Tuning creates these variables
             /*MecanumConfig mecanumConstants = new MecanumConfig()
                     .leftFrontMotorName("leftFrontDT")
@@ -153,21 +143,17 @@ public class StarterTeleOp extends LinearOpMode {
 
             follower = Constants.create(hardwareMap);
 
+            /** -------------- Initialization complete ------------ */
 
             waitForStart();
 
-            // Pedro 2 build method
-            /* follower.startTeleOpDrive();  */
-
-            /* ---------------- Main Loop ---------------- */
+            /** ---------------- Main Loop ---------------- */
             while (opModeIsActive()) {
                 handleDrive();
                 handleIntake();
                 handleShootingStateMachine();
-            //    handleLift();
 
                 handlePullBack(pullBackTicks);
-
 
                 shooter.update();
                 follower.update();
@@ -177,9 +163,9 @@ public class StarterTeleOp extends LinearOpMode {
             limelight.stop();
         }
 
-        /* =========================================================
-           DRIVER CONTROL
-           ========================================================= */
+        /** =============================================================
+         *            DRIVER CONTROL
+         * ============================================================= */
         private void handleDrive() {
             // Disable manual driving during shooting sequence
             if (shootState != ShootState.IDLE) return;
@@ -205,9 +191,10 @@ public class StarterTeleOp extends LinearOpMode {
 
         }
 
-        /* =========================================================
-           INTAKE CONTROL
-           ========================================================= */
+        /** =============================================================
+         *           INTAKE CONTROL
+         * =============================================================
+         */
         private void handleIntake() {
             if (shootState != ShootState.IDLE) return;
 
@@ -222,18 +209,20 @@ public class StarterTeleOp extends LinearOpMode {
             }
         }
 
-        /* =========================================================
-           SHOOTING STATE MACHINE
-           ========================================================= */
+        /**
+         * =============================================================
+         *          SHOOTING STATE MACHINE
+         * =============================================================
+         */
         private void handleShootingStateMachine() {
 
-            /* -------- Abort if trigger released -------- */
+            /** -------- Abort if trigger released -------- */
             if (!gamepad1.a && shootState != ShootState.IDLE) {
                 abortShot();
                 return;
             }
 
-            /* -------- Start shooting sequence -------- */
+            /** -------- Start shooting sequence -------- */
             if (gamepad1.a && shootState == ShootState.IDLE) {
                 shootState = ShootState.ALIGNING;
                 bestHeadingErrorDeg = Double.MAX_VALUE;
@@ -249,7 +238,7 @@ public class StarterTeleOp extends LinearOpMode {
                 lastTagSeenTimeMs = System.currentTimeMillis();
             }
 
-            /* -------- Safety: lost tag -------- */
+            /** -------- Safety: lost tag -------- */
             if (shootState != ShootState.IDLE &&
                     System.currentTimeMillis() - lastTagSeenTimeMs > TAG_TIMEOUT_MS) {
                 abortShot();
@@ -258,7 +247,11 @@ public class StarterTeleOp extends LinearOpMode {
 
             switch (shootState) {
 
-            /* =====================================================
+                case IDLE: {
+                    break;
+                }
+
+            /** =====================================================
                ALIGNING
                -----------------------------------------------------
                Continues refining heading as long as improvement
@@ -266,19 +259,20 @@ public class StarterTeleOp extends LinearOpMode {
                  - Error is already acceptable AND
                  - Further improvement has stalled
                ===================================================== */
+
                 case ALIGNING: {
 
-                    // Manual override → skip alignment and keep scoring
+                    /** Manual override → skip alignment and keep scoring */
                     if (gamepad1.dpad_left) {
                         shootState = ShootState.SPINNING_UP;
                         break;
                     }
 
-                    // Horizontal offset from Limelight (degrees)
+                    /** Horizontal offset from Limelight (degrees) */
                     double tx = result.getTx();
                     double absError = Math.abs(tx);
 
-                    /* ----- Track whether we're still improving ----- */
+                    /** ----- Track whether we're still improving ----- */
                     if (absError < bestHeadingErrorDeg - ALIGN_MIN_IMPROVEMENT) {
                         bestHeadingErrorDeg = absError;
                         alignStallCounter = 0;
@@ -286,18 +280,18 @@ public class StarterTeleOp extends LinearOpMode {
                         alignStallCounter++;
                     }
 
-                    /* ----- Compute turn command ----- */
+                    /** ----- Compute turn command ----- */
                     double turn = ALIGN_KP * (-tx);
 
-                    // Enforce minimum command if still meaningfully off
+                    /** Enforce minimum command if still meaningfully off */
                     if (Math.abs(turn) < ALIGN_MIN_CMD &&
                             absError > ALIGN_ACCEPTABLE_ERROR) {
                         turn = Math.copySign(ALIGN_MIN_CMD, turn);
                     }
 
-                    follower.manual(0, 0, turn /*, false, heading*/);
+                    follower.manual(0, 0, turn /**, false, heading*/);
 
-                    /* ----- Exit condition ----- */
+                    /*** ----- Exit condition ----- */
                     if (absError <= ALIGN_ACCEPTABLE_ERROR &&
                             alignStallCounter >= ALIGN_STALL_CYCLES) {
                         shootState = ShootState.SPINNING_UP;
@@ -306,7 +300,7 @@ public class StarterTeleOp extends LinearOpMode {
                     break;
                 }
 
-            /* =====================================================
+            /** =====================================================
                SPINNING UP
                ===================================================== */
                 case SPINNING_UP: {
@@ -350,10 +344,11 @@ public class StarterTeleOp extends LinearOpMode {
                     break;
                 }
 
-            /* =====================================================
+            /** =====================================================
                FEEDING
                ===================================================== */
                 case FEEDING:
+                    follower.holding(); // ???
                     follower.manual(0, 0, heading);  // ???
                     intake.setPower(1);
                     break;
@@ -370,7 +365,7 @@ public class StarterTeleOp extends LinearOpMode {
             telemetry.addData("Distance (cm)", targetDistanceCm);
         }
 
-        /* =========================================================
+        /** =========================================================
            ABORT
            ========================================================= */
         private void abortShot() {
@@ -402,12 +397,4 @@ public class StarterTeleOp extends LinearOpMode {
 
         }
 
-        /*private void handleLift() {
-            if (gamepad1.dpad_up && gamepad1.left_trigger > .75 && lift.getCurrentPosition() < 3600) {
-            } else {
-                lift.setPower(0);
-            }
-        }*/
-    }
-
-//}
+}
