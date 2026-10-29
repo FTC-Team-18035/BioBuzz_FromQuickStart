@@ -12,7 +12,7 @@ package org.firstinspires.ftc.teamcode.pedroPathing;
  * @author Harrison Womack - 10158 Scott's Bots
  * @version 1.0, 3/5/2024
  */
-public class PIDFController implements Controller {
+public class PIDFController implements Pedro2Controller {
     private PIDFCoefficients coefficients;
 
     private double previousError;

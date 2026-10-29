@@ -1,5 +1,5 @@
 package org.firstinspires.ftc.teamcode.pedroPathing;
-public interface Controller {
+public interface Pedro2Controller {
     double run();
     void reset();
     void updateError(double error);
