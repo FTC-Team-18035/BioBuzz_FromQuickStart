@@ -9,8 +9,8 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.configuration.typecontainers.MotorConfigurationType;
 import com.qualcomm.robotcore.util.Range;
 
-import org.firstinspires.ftc.teamcode.pedroPathing.PIDFCoefficients;
-import org.firstinspires.ftc.teamcode.pedroPathing.PIDFController;
+import org.firstinspires.ftc.teamcode.pedroPathing2_depricated_classes_in_use.PIDFCoefficients;
+import org.firstinspires.ftc.teamcode.pedroPathing2_depricated_classes_in_use.PIDFController;
 
 /**
  * Shooter subsystem handling dual flywheel motors and angle servos.
@@ -39,7 +39,6 @@ public class ShooterSubsystem {
         vaultRelease = hardwareMap.get(Servo.class, "vault_release");
         vaultFeed = hardwareMap.get(CRServo.class, "vault_feed");
         vaultFeed2 = hardwareMap.get(CRServo.class, "vault_feed2");
-        // changed to FTCLib PIDFController
         leftController = new PIDFController(new PIDFCoefficients(0005, 0, 0, 0.000544));
         rightController = new PIDFController(new PIDFCoefficients(0.005, 0, 0, 0.000544));
         configureMotors();
@@ -112,11 +111,11 @@ public class ShooterSubsystem {
         vaultFeed2.setPower(-power);
     }
 
-    /*public void setPIDFCoefficients(PIDFCoefficients coefficients) {
+    public void setPIDFCoefficients(PIDFCoefficients coefficients) {
         // Apply identical gains to both controllers (clone to avoid shared state).
         leftController.setCoefficients(new PIDFCoefficients(coefficients.P, coefficients.I, coefficients.D, coefficients.F));
         rightController.setCoefficients(new PIDFCoefficients(coefficients.P, coefficients.I, coefficients.D, coefficients.F));
-    }*/
+    }
 
     public void resetControllers() {
         leftController.reset();

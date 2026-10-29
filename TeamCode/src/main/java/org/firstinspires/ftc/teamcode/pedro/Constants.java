@@ -67,5 +67,15 @@ public class Constants {
     public static Follower create(HardwareMap h) {
         // return new Follower(Drivetrain, Localizer, Foresight);
         return null;
+    }  // update when Tuning is completed to allow opmodes to use follower = Constants.create(hardwareMap);
+
+    /**  Once Tuning is completed - the above method is changed to the following:
+    public static Follower create(HardwareMap h) {
+        return new Follower(
+                new PinpointLocalizer(h, localizerConfig),
+                new Mecanum(h, drivetrainConfig),
+                new Foresight(foresightConfig)
+        );
     }
+     */
 }

@@ -8,8 +8,8 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.configuration.typecontainers.MotorConfigurationType;
 import com.qualcomm.robotcore.util.Range;
 
-import org.firstinspires.ftc.teamcode.pedroPathing.PIDFController;
-import org.firstinspires.ftc.teamcode.pedroPathing.PIDFCoefficients;
+import org.firstinspires.ftc.teamcode.pedroPathing2_depricated_classes_in_use.PIDFController;
+import org.firstinspires.ftc.teamcode.pedroPathing2_depricated_classes_in_use.PIDFCoefficients;
 
 /**
  * Shooter subsystem handling dual flywheel motors and angle servos.
@@ -25,8 +25,8 @@ public class ShooterSubsystemSCRIMMAGE {
     private final Servo vaultRelease;
     private final CRServo vaultFeed;
     private final CRServo vaultFeed2;
-    private final org.firstinspires.ftc.teamcode.pedroPathing.PIDFController leftController;
-    private final org.firstinspires.ftc.teamcode.pedroPathing.PIDFController rightController;
+    private final PIDFController leftController;
+    private final PIDFController rightController;
     private double targetVelocity;
     private double currentServoPosition;
 
