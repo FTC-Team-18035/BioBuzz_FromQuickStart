@@ -4,6 +4,8 @@ import com.pedropathing.drivetrain.DrivePowers;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.follower.ManualDrive;
 import com.pedropathing.math.Pose;
+import com.pedropathing.revhub.drivetrains.MecanumConfig;
+import com.pedropathing.revhub.localizers.PinpointConfig;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -129,17 +131,6 @@ public class StarterTeleOp extends LinearOpMode {
             limelight.start();
 
             /** ---------------- Drive / Localization Setup ---------------- */
-
-            // TODO Pedro Tuning creates these variables
-            /*MecanumConfig mecanumConstants = new MecanumConfig()
-                    .leftFrontMotorName("leftFrontDT")
-                    .leftRearMotorName("leftRearDT")
-                    .rightFrontMotorName("rightFrontDT")
-                    .rightRearMotorName("rightRearDT");       */
-
-            // TODO Pedro Tuning creates these variables
-            /*PinpointConfig pinpointConfig = new PinpointConfig()
-                    .hardwareMapName("pinpoint");             */
 
             follower = Constants.create(hardwareMap);
 

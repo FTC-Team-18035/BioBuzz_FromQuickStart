@@ -29,7 +29,10 @@
 
 package org.firstinspires.ftc.teamcode;
 
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
+import com.pedropathing.drivetrain.DrivePowers;
+import com.pedropathing.follower.Follower;
+import com.pedropathing.follower.ManualDrive;
+import com.pedropathing.math.Velocity;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
@@ -40,6 +43,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Position;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
+import org.firstinspires.ftc.teamcode.pedro.Constants;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
@@ -66,9 +70,9 @@ import java.util.List;
  * Use Android Studio to Copy this Class, and Paste it into your team's code folder with a new name.
  * Remove or comment out the @Disabled line to add this OpMode to the Driver Station OpMode list.
  */
-@TeleOp(name = "Concept: AprilTag Localization", group = "Concept")
+@TeleOp(name = "Testing: AprilTag Localization")
 //@Disabled
-public class ConceptAprilTagLocalization extends LinearOpMode {
+public class Webcam_Test_AprilTagLocalization extends LinearOpMode {
 
     private static final boolean USE_WEBCAM = true;  // true for webcam, false for phone camera
 
@@ -97,7 +101,7 @@ public class ConceptAprilTagLocalization extends LinearOpMode {
      * to +/-90 degrees if it's vertical, or 180 degrees if it's upside-down.
      */
     private Position cameraPosition = new Position(DistanceUnit.INCH,
-            0, 0, 0, 0);
+            0, 8, 6, 0);    // estimated sitting at the front and middle of SERQUET
     private YawPitchRollAngles cameraOrientation = new YawPitchRollAngles(AngleUnit.DEGREES,
             0, -90, 0, 0);
 
@@ -111,23 +115,28 @@ public class ConceptAprilTagLocalization extends LinearOpMode {
      */
     private VisionPortal visionPortal;
 
-    // To find the VID/PID for a camera:
-    //
-    // Linux: open a terminal, run "lsusb", locate the line for your camera,
-    // and find the section that resembles "ID 1d6b:0002"; this is VID:PID
-    //
-    // OSX: open a terminal, run "system_profiler SPUSBDataType", locate the
-    // section for your camera, and find the "Product ID:" and "Vendor ID:"
-    // listings in the output
-    //
-    // Windows: open a PowerShell, run:
+    /** To find the VID/PID for a camera:
+
+    // TODO for webcam
+
+    /** Windows: open a PowerShell, run:
     // Get-PnpDevice -PresentOnly | Where-Object { $_.InstanceId -like 'USB*' } | Select-Object FriendlyName, InstanceId
-    // and locate the line for your camera. The VID and PID is listed directly in the line.
+    // and locate the line for your camera. The VID and PID is listed directly in the line. */
     static final int VENDOR_ID_SUNPLUS_INNOVATION_TECHNOLOGY = 0x1BCF;
     static final int PRODUCT_ID_ARDUCAM_OV5648 = 0x284C;
 
+    private Follower follower;  // Pedro Follower object for drivetrain
+    private double heading = 0;  // drivetrain variable
+    public double scalar;   // Turbo drivetrain multiplier
+    public Velocity drivetrain_velocity; // velocity telemetry var
+
     @Override
     public void runOpMode() {
+
+        /** ---------------- Drive / Localization Setup ---------------- */
+
+        follower = Constants.create(hardwareMap);
+        /** ----------------------------------------------------------- */
 
         // Demonstrate how to add a camera compatibility quirk
         // these can sometimes be needed if a camera behaves poorly.
@@ -148,6 +157,7 @@ public class ConceptAprilTagLocalization extends LinearOpMode {
 
         while (opModeIsActive()) {
 
+            handleDrive();
             telemetryAprilTag();
 
             // Push telemetry to the Driver Station.
@@ -162,6 +172,8 @@ public class ConceptAprilTagLocalization extends LinearOpMode {
 
             // Share the CPU.
             sleep(20);
+
+            follower.update();
         }
 
         // Save more CPU resources when camera is no longer needed.
@@ -208,7 +220,7 @@ public class ConceptAprilTagLocalization extends LinearOpMode {
 
         // Set the camera (webcam vs. built-in RC phone camera).
         if (USE_WEBCAM) {
-            builder.setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"));
+            builder.setCamera(hardwareMap.get(WebcamName.class, "webcam"));
         } else {
             builder.setCamera(BuiltinCameraDirection.BACK);
         }
@@ -271,7 +283,30 @@ public class ConceptAprilTagLocalization extends LinearOpMode {
         // Add "key" information to telemetry
         telemetry.addLine("\nkey:\nXYZ = X (Right), Y (Forward), Z (Up) dist.");
         telemetry.addLine("PRY = Pitch, Roll & Yaw (XYZ Rotation)");
+        telemetry.addData("Velocity = " , drivetrain_velocity);
 
     }   // end method telemetryAprilTag()
+    /** =============================================================
+     *            DRIVER CONTROL
+     * ============================================================= */
+    private void handleDrive() {
 
+        if (gamepad1.left_trigger > .75 && gamepad1.right_trigger > .75) { // heading reset sequence
+            heading = follower.pose().heading();
+        }
+
+        if (gamepad1.left_trigger > .5) { scalar = 1; } else { scalar = .5;}
+
+        DrivePowers powers = ManualDrive.fieldCentric(
+                -gamepad1.left_stick_y * scalar,
+                gamepad1.left_stick_x * scalar,
+                gamepad1.right_stick_x * scalar,
+                follower.pose().heading()
+        );
+
+        drivetrain_velocity = follower.velocity();
+        // follower.manual(powers);  //regular teleOp driving
+        ManualDrive.driveOrHold(follower, powers);  // HOLDS Position when no driver input
+
+    }
 }   // end class
