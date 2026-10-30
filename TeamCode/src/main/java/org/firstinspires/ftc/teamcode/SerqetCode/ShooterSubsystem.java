@@ -17,18 +17,26 @@ import org.firstinspires.ftc.teamcode.pedroPathing2_depricated_classes_in_use.PI
  * Target velocity is applied to both motors independently with separate PIDF controllers.
  */
 public class ShooterSubsystem {
+    /** These defined the physical limits of our shooter servos */
     private static final double SERVO_MIN = 0.1809;
     private static final double SERVO_MAX = 0.2306;
+    /** 2 Flywheels */
     private final DcMotorEx leftShooter;
     private final DcMotorEx rightShooter;
+    /** Originally 2 servos for faster adjustment */
     private final Servo pitchServoLeft;
     //private final Servo pitchServoRight;
+    /** servo to hold artifacts back from flywheels */
     private final Servo vaultRelease;
+    /** servos to move artifacts along the vault pass */
     private final CRServo vaultFeed;
     private final CRServo vaultFeed2;
+    /** controller for the flywheel speed */
     private final PIDFController leftController;
     private final PIDFController rightController;
+    /** calculated flywheel goal for shot distance */
     private double targetVelocity;
+    /** calculated servo position for shot angle */
     private double currentServoPosition;
 
     public ShooterSubsystem(HardwareMap hardwareMap) {
@@ -46,8 +54,7 @@ public class ShooterSubsystem {
         targetVelocity = 0.0;
     }
 
-    //Trajectory calculation based on targetDistance
-    //-----------------------------------------------------
+    /** Trajectory calculation based on targetDistance----------------------------------------------------- */
     public static double[] Calculate(double targetDistance) {
         double distance = targetDistance + 15;
         // define values used for all calculations
@@ -64,7 +71,7 @@ public class ShooterSubsystem {
         return new double[]{launchVelocity, launchAngle}; // these are the target for the shooter's flywheel and servo angle adjustments
     }
 
-    //-----------------------------------------------------
+    /** Shooter hardware configuration ----------------------------------------------------- */
     private void configureMotors() {
         DcMotorEx[] motors = new DcMotorEx[]{leftShooter, rightShooter};
         for (DcMotorEx motor : motors) {
@@ -97,7 +104,7 @@ public class ShooterSubsystem {
         setServoPosition(anglePosition);
     }
 
-    public void stop() {
+    public void stop() {  // method to call when shooter is unused
         targetVelocity = 0.0;
         leftShooter.setPower(0.0);
         rightShooter.setPower(0.0);
@@ -138,7 +145,7 @@ public class ShooterSubsystem {
         return currentServoPosition;
     }
 
-    public void update() {
+    public void update() {          // method to call each loop to control the shooter mechanism
         leftController.setTargetPosition(targetVelocity);
         rightController.setTargetPosition(-targetVelocity);
 
